@@ -92,6 +92,27 @@ Envelope budgeting is a personal finance approach where you divide your income i
 - `mix ecto.migrate` - Run database migrations
 - `mix phx.server` - Start Phoenix server
 - `iex -S mix phx.server` - Start Phoenix server with interactive Elixir shell
+- `mix test` - Run all tests
+
+## Testing
+
+The application comes with a comprehensive test suite that verifies all the core functionality:
+
+### Context Tests
+
+- Tests for category operations (create, update, list)
+- Tests for income management (get, update)
+- Tests for budget adjustments and spending
+- Tests for transaction integrity
+- Validation tests for insufficient funds/income
+
+### LiveView Tests
+
+- Tests for page rendering and basic display
+- Tests for interactive form submissions
+- Tests for modal operation
+- Tests for proper flash notifications
+- Tests for error handling
 
 ## Notes
 
