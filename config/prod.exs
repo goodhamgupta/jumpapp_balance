@@ -19,3 +19,9 @@ config :logger, level: :info
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
+
+config :jumpapp_balance, JumpappBalance.Repo,
+  database: "jumpapp_balance_prod.db",
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 5
