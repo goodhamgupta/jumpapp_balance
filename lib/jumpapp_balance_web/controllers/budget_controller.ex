@@ -3,7 +3,6 @@ defmodule JumpappBalanceWeb.BudgetController do
 
   alias JumpappBalance.Budget
   alias JumpappBalance.Category
-  alias JumpappBalance.Income
 
   def index(conn, _params) do
     categories = Budget.list_categories()
@@ -31,7 +30,10 @@ defmodule JumpappBalanceWeb.BudgetController do
     end
   end
 
-  def adjust_budget(conn, %{"id" => id, "category" => category_params}) do
+  def adjust_budget(conn, params) do
+    id = params["id"] || params["category_id"]
+    category_params = params["category"]
+    
     category = Budget.get_category!(id)
     amount = Decimal.new(category_params["amount"] || "0")
     
@@ -48,7 +50,9 @@ defmodule JumpappBalanceWeb.BudgetController do
     end
   end
 
-  def spend(conn, %{"id" => id, "category" => category_params}) do
+  def spend(conn, params) do
+    id = params["id"] || params["category_id"]
+    category_params = params["category"]
     category = Budget.get_category!(id)
     amount = Decimal.new(category_params["amount"] || "0")
     

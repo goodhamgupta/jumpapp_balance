@@ -24,12 +24,44 @@ defmodule JumpappBalance.Budget do
   def get_category!(id), do: Repo.get!(Category, id)
 
   @doc """
-  Creates a category.
+  Creates a category and subtracts the initial balance from income.
   """
   def create_category(attrs \\ %{}) do
-    %Category{}
-    |> Category.changeset(attrs)
-    |> Repo.insert()
+    # Get the initial balance from the attributes
+    balance_str = attrs["balance"] || attrs[:balance] || "0"
+    initial_balance = 
+      case balance_str do
+        %Decimal{} -> balance_str
+        _ -> Decimal.new(balance_str)
+      end
+
+    # Get current income
+    income = get_income()
+    
+    # Check if we have enough income
+    if Decimal.compare(income.amount, initial_balance) == :lt do
+      {:error, :insufficient_income}
+    else
+      # Calculate new income amount
+      new_income_amount = Decimal.sub(income.amount, initial_balance)
+      
+      # Use a transaction to ensure both operations succeed or fail together
+      Repo.transaction(fn ->
+        # Create the category
+        case %Category{}
+             |> Category.changeset(attrs)
+             |> Repo.insert() do
+          {:ok, category} ->
+            # Update income
+            case update_income(new_income_amount) do
+              {:ok, _income} -> category
+              {:error, reason} -> Repo.rollback(reason)
+            end
+          
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
   end
 
   @doc """
@@ -84,27 +116,33 @@ defmodule JumpappBalance.Budget do
   
   @doc """
   Adjusts a category budget and updates income.
+  When you add to a category budget, that amount is subtracted from income.
   """
   def adjust_category_budget(%Category{} = category, amount) when is_binary(amount) do
     adjust_category_budget(category, Decimal.new(amount))
   end
   
   def adjust_category_budget(%Category{} = category, %Decimal{} = amount) do
-    # Update the category balance
-    new_balance = Decimal.add(category.balance, amount)
-    
     # Get current income
     income = get_income()
     
-    # Subtract from income
-    new_income_amount = Decimal.sub(income.amount, amount)
-    
-    # Update both in a transaction
-    Repo.transaction(fn ->
-      {:ok, updated_category} = update_category(category, %{balance: new_balance})
-      {:ok, _income} = update_income(new_income_amount)
-      updated_category
-    end)
+    # Validate that we have enough income to allocate
+    if Decimal.compare(income.amount, amount) == :lt do
+      {:error, :insufficient_income}
+    else
+      # Update the category balance - add the amount to the category
+      new_balance = Decimal.add(category.balance, amount)
+      
+      # Subtract from income - the amount moved from income to category
+      new_income_amount = Decimal.sub(income.amount, amount)
+      
+      # Update both in a transaction
+      Repo.transaction(fn ->
+        {:ok, updated_category} = update_category(category, %{balance: new_balance})
+        {:ok, _income} = update_income(new_income_amount)
+        updated_category
+      end)
+    end
   end
   
   @doc """

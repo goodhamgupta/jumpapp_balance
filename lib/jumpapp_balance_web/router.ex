@@ -17,14 +17,16 @@ defmodule JumpappBalanceWeb.Router do
   scope "/", JumpappBalanceWeb do
     pipe_through :browser
 
-    get "/", BudgetController, :index
+    # Use LiveView for the budget management interface
+    live "/", BudgetLive
+    live "/budget", BudgetLive
     
-    # Budget routes
-    get "/budget", BudgetController, :index
-    post "/budget", BudgetController, :create
-    post "/budget/:id/adjust", BudgetController, :adjust_budget
-    post "/budget/:id/spend", BudgetController, :spend
-    post "/budget/income", BudgetController, :adjust_income
+    # Keep these routes for non-JS fallback (optional)
+    get "/traditional", BudgetController, :index
+    post "/traditional/budget", BudgetController, :create
+    post "/traditional/budget/:id/adjust", BudgetController, :adjust_budget
+    post "/traditional/budget/:id/spend", BudgetController, :spend
+    post "/traditional/budget/income", BudgetController, :adjust_income
   end
 
   # Other scopes may use custom stacks.
