@@ -14,5 +14,6 @@ defmodule JumpappBalance.Category do
     category
     |> cast(attrs, [:name, :balance])
     |> validate_required([:name, :balance])
+    |> validate_number(:balance, greater_than_or_equal_to: 0)
   end
 end

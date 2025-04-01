@@ -3,6 +3,12 @@ defmodule JumpappBalanceWeb.BudgetLive do
 
   alias JumpappBalance.Budget
   alias JumpappBalance.Category
+  
+  # Helper function to format decimal numbers for display
+  def format_decimal(decimal) do
+    decimal
+    |> Decimal.to_string()
+  end
 
   def mount(_params, _session, socket) do
     categories = Budget.list_categories()
@@ -35,6 +41,14 @@ defmodule JumpappBalanceWeb.BudgetLive do
 
         {:noreply, socket}
       
+      {:error, :negative_balance_not_allowed} ->
+        socket =
+          socket
+          |> put_flash(:error, "Negative balance not allowed.")
+          |> assign(:changeset, Budget.change_category(%Category{}))
+
+        {:noreply, socket}
+
       {:error, :insufficient_income} ->
         socket =
           socket
@@ -106,6 +120,14 @@ defmodule JumpappBalanceWeb.BudgetLive do
 
         {:noreply, socket}
         
+      {:error, :negative_amount_not_allowed} ->
+        socket =
+          socket
+          |> put_flash(:error, "Negative amount not allowed.")
+          |> assign(:show_adjust_modal, false)
+
+        {:noreply, socket}
+
       {:error, :insufficient_income} ->
         socket =
           socket
@@ -139,11 +161,20 @@ defmodule JumpappBalanceWeb.BudgetLive do
 
         {:noreply, socket}
 
+      {:error, :negative_amount_not_allowed} ->
+        socket =
+          socket
+          |> put_flash(:error, "Negative amount not allowed.")
+          |> assign(:show_spend_modal, false)
+
+        {:noreply, socket}
+        
       {:error, :insufficient_funds} ->
         socket =
           socket
           |> put_flash(:error, "Insufficient funds in this category.")
           |> assign(:show_spend_modal, false)
+          |> assign(:categories, Budget.list_categories())  # Refresh categories to ensure display is accurate
 
         {:noreply, socket}
 
@@ -152,6 +183,7 @@ defmodule JumpappBalanceWeb.BudgetLive do
           socket
           |> put_flash(:error, "Could not record expense.")
           |> assign(:show_spend_modal, false)
+          |> assign(:categories, Budget.list_categories())  # Refresh categories to ensure display is accurate
 
         {:noreply, socket}
     end
@@ -168,6 +200,14 @@ defmodule JumpappBalanceWeb.BudgetLive do
           |> put_flash(:info, "Income updated successfully.")
           |> assign(:show_income_modal, false)
           |> assign(:income, Budget.get_income())
+
+        {:noreply, socket}
+
+      {:error, :negative_amount_not_allowed} ->
+        socket =
+          socket
+          |> put_flash(:error, "Negative amount not allowed.")
+          |> assign(:show_income_modal, false)
 
         {:noreply, socket}
 

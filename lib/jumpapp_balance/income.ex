@@ -13,5 +13,6 @@ defmodule JumpappBalance.Income do
     income
     |> cast(attrs, [:amount])
     |> validate_required([:amount])
+    |> validate_number(:amount, greater_than_or_equal_to: 0)
   end
 end

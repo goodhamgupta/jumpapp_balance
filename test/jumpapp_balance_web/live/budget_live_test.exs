@@ -89,6 +89,19 @@ defmodule JumpappBalanceWeb.BudgetLiveTest do
     # Also verify the category name appears (this should be more reliable)
     assert render(view) =~ "New Category"
   end
+  
+  test "shows error on negative balance", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/")
+    
+    # Try to create category with negative balance
+    attrs = %{name: "Negative Category", balance: "-50.00"}
+    view
+    |> form("form", category: attrs)
+    |> render_submit()
+    
+    # Should show error message
+    assert render(view) =~ "Negative balance not allowed"
+  end
 
   test "shows error on insufficient income", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/")
@@ -121,6 +134,21 @@ defmodule JumpappBalanceWeb.BudgetLiveTest do
     # because the HTML output is large and complex. Instead, we verify
     # the operation completed successfully through flash messages.
   end
+  
+  test "shows error on negative budget adjustment", %{conn: conn, category: _category} do
+    {:ok, view, _html} = live(conn, "/")
+    
+    # Open adjust budget modal
+    view |> element("button", "Adjust Budget") |> render_click()
+    
+    # Submit negative adjustment
+    view
+    |> element("form[phx-submit='adjust-budget']")
+    |> render_submit(%{category: %{amount: "-50.00"}})
+    
+    # Should show error message
+    assert render(view) =~ "Negative amount not allowed"
+  end
 
   test "can spend from category", %{conn: conn, category: _category} do
     {:ok, view, _html} = live(conn, "/")
@@ -136,6 +164,21 @@ defmodule JumpappBalanceWeb.BudgetLiveTest do
     # Verify the flash message appears
     assert render(view) =~ "Expense recorded successfully"
   end
+  
+  test "shows error on negative spend amount", %{conn: conn, category: _category} do
+    {:ok, view, _html} = live(conn, "/")
+    
+    # Open spend modal
+    view |> element("button", "Spend") |> render_click()
+    
+    # Submit negative spend amount
+    view
+    |> element("form[phx-submit='spend']")
+    |> render_submit(%{category: %{amount: "-50.00"}})
+    
+    # Should show error message
+    assert render(view) =~ "Negative amount not allowed"
+  end
 
   test "can adjust income", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/")
@@ -150,5 +193,20 @@ defmodule JumpappBalanceWeb.BudgetLiveTest do
     
     # Check for success message
     assert render(view) =~ "Income updated successfully"
+  end
+  
+  test "shows error on negative income", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/")
+    
+    # Open income modal
+    view |> element("button", "Adjust Income") |> render_click()
+    
+    # Submit negative income adjustment
+    view
+    |> element("form[phx-submit='adjust-income']")
+    |> render_submit(%{income: %{amount: "-1200.00"}})
+    
+    # Should show error message
+    assert render(view) =~ "Negative amount not allowed"
   end
 end

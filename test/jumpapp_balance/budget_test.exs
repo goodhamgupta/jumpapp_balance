@@ -44,6 +44,11 @@ defmodule JumpappBalance.BudgetTest do
     test "create_category/1 with invalid data returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Budget.create_category(@invalid_attrs)
     end
+    
+    test "create_category/1 with negative balance returns error" do
+      # Try to create category with negative balance
+      assert {:error, :negative_balance_not_allowed} = Budget.create_category(%{"name" => "Test", "balance" => "-100.00"})
+    end
 
     test "create_category/1 subtracts from income" do
       # Set initial income
@@ -105,6 +110,10 @@ defmodule JumpappBalance.BudgetTest do
       assert {:ok, %Income{} = income} = Budget.update_income(amount)
       assert Decimal.equal?(income.amount, Decimal.new(amount))
     end
+    
+    test "update_income/1 with negative amount returns error" do
+      assert {:error, :negative_amount_not_allowed} = Budget.update_income("-100.00")
+    end
   end
 
   describe "budget adjustments" do
@@ -143,6 +152,12 @@ defmodule JumpappBalance.BudgetTest do
       assert result == {:error, :insufficient_income}
     end
     
+    test "adjust_category_budget/2 with negative amount returns error", %{category: category} do
+      result = Budget.adjust_category_budget(category, "-50.00")
+      
+      assert result == {:error, :negative_amount_not_allowed}
+    end
+    
     test "spend_from_category/2 reduces category balance", %{category: category} do
       spend_amount = "50.00"
       initial_balance = category.balance
@@ -163,6 +178,12 @@ defmodule JumpappBalance.BudgetTest do
       result = Budget.spend_from_category(category, "300.00")
       
       assert result == {:error, :insufficient_funds}
+    end
+    
+    test "spend_from_category/2 with negative amount returns error", %{category: category} do
+      result = Budget.spend_from_category(category, "-50.00")
+      
+      assert result == {:error, :negative_amount_not_allowed}
     end
   end
 end
